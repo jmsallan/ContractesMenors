@@ -1,0 +1,91 @@
+---
+title: "Contractes Menors Generalitat"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Cargamos las librerías que necesitamos:
+
+```{r, message=FALSE}
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+```
+
+
+## Lectura y examen previo de los datos
+
+Empezamos con la lectura de los datos en RDS. En el archivo `LecturaDades.R` se indica ćomo se ha obtenido este RDS a partir de los datos de la Generalitat.
+
+```{r}
+contractes <- readRDS("data/contractes.RDS")
+```
+
+He corregido la duplicación de nombre de uno de los tipos de contratos:
+
+```{r}
+contractes <- contractes %>% mutate(Tipus = sub("Gestió de Serveis Públics", "Gestió de serveis públics", Tipus))
+```
+
+Y finalmente he evaluado si hay datos faltantes:
+
+```{r}
+contractes %>% filter(is.na(Tipus))
+contractes %>% filter(is.na(Organ))
+contractes %>% filter(is.na(Adjudicatari))
+contractes %>% filter(is.na(Objecte))
+contractes %>% filter(is.na(Import))
+```
+
+Hay 120 contratos para los que no se ha introducido importe:
+
+```{r}
+contractes %>% filter(is.na(Import)) %>% group_by(Tipus, Organ) %>% summarise(NombreContractes=n())
+```
+
+Visto esto, podemos hacernos una idea del número total de contratos de que disponemos para los tres años:
+
+```{r}
+contractes %>% summarise(contractes=n(), total=sum(Import, na.rm = TRUE), mitjana=mean(Import, na.rm = TRUE))
+
+contractes %>% group_by(Tipus) %>% summarise(contractes=n(), total=sum(Import, na.rm = TRUE), mitjana=mean(Import, na.rm = TRUE))
+
+contractes %>% group_by(Any) %>% summarise(contractes=n(), total=sum(Import, na.rm = TRUE), mitjana=mean(Import, na.rm = TRUE))
+```
+
+Vemos que el número y el valor total de los contratos menores ha aumentado en el período analizado, llegando hasta 235 millones de euros en 2017. En 2017 el número total de contratos realizados aumentó significativamente, y disminuyó el valor medio contratado.
+
+## Fraccionamiento de contratos
+
+El límite máximo para poder contratar sin concurso es de 50.000 euros para contratos de obra, y de 18.000 euros para el resto de contratos. Para evaluar estos contratos, he generado dos tablas, una para los contratos de obra entre 49.000 y 49.999 euros, y otra para el resto de contratos entre 17.000 y 17.999 euros.
+
+```{r}
+NoObres <- contractes %>% filter(Tipus !="Obres" & Import >= 17000 & Import <= 17999)
+Obres <- contractes %>% filter(Tipus =="Obres" & Import >= 49000 & Import <= 49999)
+```
+
+Examinemos estas dos tablas:
+
+```{r}
+NoObres %>% group_by(Organ, Adjudicatari) %>% summarise(num_contractes=n(), total=sum(Import)) %>% arrange(desc(num_contractes))
+
+Obres %>% group_by(Organ, Adjudicatari) %>% summarise(num_contractes=n(), total=sum(Import)) %>% arrange(desc(num_contractes))
+```
+
+Tenemos 201 contratos de obra en los límites definidos, y 2.887 del resto de contratos. A modo de ejemplo, podemos listar los objetos de los contratos de Multianau, SL con el Departament de Justícia:
+
+```{r}
+NoObres %>% filter(Organ=="Departament de Justícia" & Adjudicatari=="MULTIANAU, SL") %>% select(Objecte) %>% print(n=49)
+```
+
+Del objeto de los contratos, puede llegarse a la conclusión de que se hayan fraccionado para no llevar la contrata de limpieza a concurso. Podemos ahcer un análisis parecido con contratos de obras:
+
+```{r}
+Obres %>% filter(Organ=="Departament de Territori i Sostenibilitat" & Adjudicatari=="FIRTEC SA") %>% select(Objecte)
+```
+
+
+

@@ -1,4 +1,5 @@
 setwd("~/Documents/ContractesMenors") #canviar per adreça a cada ordinador
+setwd("~/Documentos/ContractesMenors") #canviar per adreça a cada ordinador
 
 
 library(dplyr)
@@ -52,3 +53,17 @@ contractes %>% filter(Import < 20000) %>% ggplot(aes(Import)) + geom_density() +
 contractes %>% group_by(Data) %>% summarise(num_contractes=n()) %>% arrange(desc(num_contractes))
 contractes %>% group_by(Data) %>% summarise(total_import=sum(Import)) %>% arrange(desc(total_import))
 contractes %>% group_by(Data) %>% summarise(num_contractes=n()) %>% ggplot(aes(Data, num_contractes)) + geom_line()
+
+#----contractacio recurrent----
+
+NoObres <- contractes %>% filter(Tipus !="Obres" & Import >= 17000 & Import <= 17999)
+Obres <- contractes %>% filter(Tipus =="Obres" & Import >= 49000 & Import <= 49999)
+
+
+NoObres %>% group_by(Organ, Adjudicatari) %>% summarise(num_contractes=n(), total=sum(Import)) %>% arrange(desc(num_contractes))
+
+Obres %>% group_by(Organ, Adjudicatari) %>% summarise(num_contractes=n(), total=sum(Import)) %>% arrange(desc(num_contractes))
+
+NoObres %>% filter(Organ=="Departament de Justícia" & Adjudicatari=="MULTIANAU, SL") %>% select(Objecte)
+
+Obres %>% filter(Organ=="Departament de Territori i Sostenibilitat" & Adjudicatari=="FIRTEC SA") %>% select(Objecte)

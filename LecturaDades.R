@@ -1,4 +1,5 @@
 setwd("~/Documents/ContractesMenors")
+setwd("~/Documentos/ContractesMenors")
 
 library(readxl)
 
@@ -23,3 +24,5 @@ contractes <- bind_rows(contractes.2015, contractes.2016, contractes.2017)
 
 saveRDS(contractes, "data/contractes.RDS")
 
+saveRDS(unique(contractes$Organ), "data/organs.RDS")
+saveRDS(unique(contractes$Adjudicatari), "data/adjudictaris.RDS")
